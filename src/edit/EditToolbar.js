@@ -21,7 +21,8 @@ L.EditToolbar = L.Toolbar.extend({
 			}
 		},
 		remove: {},
-		featureGroup: null /* REQUIRED! TODO: perhaps if not set then all layers on the map are selectable? */
+		featureGroup: null, /* REQUIRED! TODO: perhaps if not set then all layers on the map are selectable? */
+		styleable: false /* REQUIRES Jquery and Spectrum.js*/
 	},
 
 	initialize: function (options) {
@@ -35,6 +36,10 @@ L.EditToolbar = L.Toolbar.extend({
 
 		if (options.remove) {
 			options.remove = L.extend({}, this.options.remove, options.remove);
+		}
+		
+		if (options.styleable) {
+			options.styleable = L.extend({}, this.options.styleable, options.styleable);
 		}
 
 		this._toolbarClass = 'leaflet-draw-edit';
@@ -57,6 +62,13 @@ L.EditToolbar = L.Toolbar.extend({
 			{
 				enabled: this.options.remove,
 				handler: new L.EditToolbar.Delete(map, {
+					featureGroup: featureGroup
+				}),
+				title: L.drawLocal.edit.toolbar.buttons.remove
+			},
+			{
+				enabled: this.options.styleable,
+				handler: new L.EditToolbar.Styleable(map, {
 					featureGroup: featureGroup
 				}),
 				title: L.drawLocal.edit.toolbar.buttons.remove
@@ -147,6 +159,10 @@ L.EditToolbar = L.Toolbar.extend({
 				L.drawLocal.edit.toolbar.buttons.remove
 				: L.drawLocal.edit.toolbar.buttons.removeDisabled
 			);
+		}
+
+		if (this.options.styleable) {
+			button = this._modes[L.EditToolbar.Styleable.TYPE].button;
 		}
 	}
 });

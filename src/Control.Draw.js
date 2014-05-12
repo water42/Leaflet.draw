@@ -13,7 +13,7 @@ L.Control.Draw = L.Control.extend({
 
 		L.Control.prototype.initialize.call(this, options);
 
-		var toolbar;
+		var toolbarDraw;
 
 		this._toolbars = {};
 
@@ -35,7 +35,7 @@ L.Control.Draw = L.Control.extend({
 			// Listen for when toolbar is enabled
 			this._toolbars[L.EditToolbar.TYPE].on('enable', this._toolbarEnabled, this);
 		}
-		L.toolbar = this; //set global var for editing the toolbar
+		L.toolbarDraw = this; //set global var for editing the toolbar
 	},
 
 	onAdd: function (map) {
