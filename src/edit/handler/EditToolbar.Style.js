@@ -67,18 +67,26 @@ L.EditToolbar.Styleable = L.Handler.extend({
         });
     },
 	_createSelect: function (n) {
-		this._sel = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-stroke');
+        this._select = L.DomUtil.create('div', 'leaflet-draw-layer-edit-styleable-stroke')
+        
+        var label = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label');
+        label.textContent = 'Stroke Width:';
+        
+        
+		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-stroke-select');
 		//this._sel.setAttribute('class','');
 
 		for ( var i = 1; n >= i; i++) {
 			var opt = L.DomUtil.create("option",'stroke-size-' + i);
-			opt.setAttribute('style','height: ' + i + 'px');
+			opt.setAttribute('style','font-size: ' + i + 'px');
 			opt.value = i
-			opt.text = "-----";
-			this._sel.add(opt);
+			opt.text = i;
+			select.add(opt);
 		}
+        this._select.appendChild(label);
+        this._select.appendChild(select);
 
-		return this._sel;
+		return this._select;
 	},
 
 	_setColor: function (color, opacity) {

@@ -66,8 +66,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 			this._map
 				.on('mousemove', this._onMouseMove, this)
-				.on('touchmove', this._onMouseMove, this)
-				.on('click', this._editStyle, this);
+				.on('touchmove', this._onMouseMove, this);
 		}
 	},
 
@@ -208,8 +207,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 				if (!(layer instanceof L.Circle) && !(layer instanceof L.Polygon) && !(layer instanceof L.Rectangle)) {
 					pathOptions.fill = false;
 				}
-
-				layer.setStyle(pathOptions);
+				
+				//layer.setStyle(pathOptions); //uncomment to revert to edit styles
 			}
 		}
 
@@ -218,13 +217,14 @@ L.EditToolbar.Edit = L.Handler.extend({
 			layer.on('dragend', this._onMarkerDragEnd);
 		} else {
 			layer.editing.enable();
+			layer.on('click', this._editStyle, this);
 		}
 	},
 
 	_disableLayerEdit: function (e) {
 		var layer = e.layer || e.target || e;
 		layer.edited = false;
-
+		this._previousLayer = null;
 		// Reset layer styles to that of before select
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
@@ -242,6 +242,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 			layer.off('dragend', this._onMarkerDragEnd, this);
 		} else {
 			layer.editing.disable();
+			layer.off('click', this._editStyle, this);
 		}
 	},
 
@@ -252,6 +253,18 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_onMouseMove: function (e) {
 		this._tooltip.updatePosition(e.latlng);
+	},
+
+	_editStyle: function (e) {
+		var layer = e.layer || e.target || e;
+
+		if (this._previousLayer != null) {
+			this._previousLayer.setStyle({ dashArray: '' });
+		}
+
+		this._previousLayer = layer;
+		layer.setStyle({ dashArray: '10, 10' });
+		
 	},
 
 	_hasAvailableLayers: function () {
