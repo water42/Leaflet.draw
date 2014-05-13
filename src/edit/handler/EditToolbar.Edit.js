@@ -277,10 +277,11 @@ L.EditToolbar.Edit = L.Handler.extend({
 		layer.setStyle({ dashArray: '10, 10' });
 		
 		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color);
+		$('.leaflet-draw-edit-styleable').spectrum("show");
 		
-		layer.options.color
-		layer.options.opacity
-		layer.options.weight
+		// layer.options.color
+		// layer.options.opacity
+		// layer.options.weight
 		
 	},
 
