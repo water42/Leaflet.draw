@@ -223,17 +223,23 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_disableLayerEdit: function (e) {
 		var layer = e.layer || e.target || e;
-		layer.edited = false;
-		this._previousLayer = null;
+
 		// Reset layer styles to that of before select
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
 				this._toggleMarkerHighlight(layer);
-			} else {
-				// reset the layer style to what is was before being selected
-				layer.setStyle(layer.options.previousOptions);
+			} else {	
+				if (layer.edited) {
+					return;
+				} else {
+					// reset the layer style to what is was before being selected
+					layer.setStyle(layer.options.previousOptions);
+				}
 				// remove the cached options for the layer object
 				delete layer.options.previousOptions;
+				layer.setStyle({ dashArray: '' });
+				layer.edited = false;
+				L.previousLayer = null;
 			}
 		}
 
@@ -258,12 +264,18 @@ L.EditToolbar.Edit = L.Handler.extend({
 	_editStyle: function (e) {
 		var layer = e.layer || e.target || e;
 
-		if (this._previousLayer != null) {
-			this._previousLayer.setStyle({ dashArray: '' });
+		if (L.previousLayer != null) {
+			L.previousLayer.setStyle({ dashArray: '' });
 		}
 
-		this._previousLayer = layer;
+		L.previousLayer = layer;
 		layer.setStyle({ dashArray: '10, 10' });
+		
+		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color);
+		
+		layer.options.color
+		layer.options.opacity
+		layer.options.weight
 		
 	},
 

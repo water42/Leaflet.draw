@@ -59,8 +59,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
                 showPalette: true,
                 palette: [ ],
                 change: function(color) {
-                    var hexColor = color.toHexString(); // #ff0000
-                    styleable._setColor(hexColor, color.alpha);
+                    styleable._setColor(color.toHexString(), color.alpha);
                 }
             });
             $('.leaflet-draw-edit-styleable').spectrum("container").append(selectStroke);
@@ -90,6 +89,15 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	},
 
 	_setColor: function (color, opacity) {
+        // Edit selected item in edit mode
+        if (L.previousLayer != null ) {
+            L.previousLayer.setStyle({
+                color: color,
+                opacity: opacity
+            });
+            L.previousLayer.edited = true;
+        }
+
 		// Use global var of toolbar that gets set on L.Control.Draw initialization
 		L.toolbarDraw.setDrawingOptions({ 
 			polyline: { shapeOptions: { color: color, opacity: opacity } },
@@ -100,6 +108,14 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	},
 
 	_setStroke: function (weight) {
+        // Edit selected item in edit mode
+        if (L.previousLayer != null ) {
+            L.previousLayer.setStyle({
+                weight: weight
+            });
+            L.previousLayer.edited = true;
+        }
+
 		L.toolbarDraw.setDrawingOptions({ 
 			polyline: { shapeOptions: { weight: weight } },
 			polygon: { shapeOptions: { weight: weight } },
