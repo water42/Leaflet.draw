@@ -96,6 +96,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	save: function () {
 		var editedLayers = new L.LayerGroup();
 		this._featureGroup.eachLayer(function (layer) {
+
 			if (layer.edited) {
 				editedLayers.addLayer(layer);
 				layer.edited = false;
@@ -129,6 +130,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	_revertLayer: function (layer) {
 		var id = L.Util.stamp(layer);
 		layer.edited = false;
+		layer.styled = false;
 		if (this._uneditedLayerProps.hasOwnProperty(id)) {
 			// Polyline, Polygon or Rectangle
 			if (layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Rectangle) {
@@ -228,17 +230,20 @@ L.EditToolbar.Edit = L.Handler.extend({
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
 				this._toggleMarkerHighlight(layer);
-			} else {	
+			} else {
 				if (layer.edited) {
 					return;
 				} else {
-					// reset the layer style to what is was before being selected
-					layer.setStyle(layer.options.previousOptions);
+					if(!layer.styled) {
+						// reset the layer style to what is was before being selected
+						layer.setStyle(layer.options.previousOptions);
+					}
 				}
 				// remove the cached options for the layer object
 				delete layer.options.previousOptions;
 				layer.setStyle({ dashArray: '' });
 				layer.edited = false;
+				layer.styled = false;
 				L.previousLayer = null;
 			}
 		}
@@ -263,7 +268,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_editStyle: function (e) {
 		var layer = e.layer || e.target || e;
-
+			
 		if (L.previousLayer != null) {
 			L.previousLayer.setStyle({ dashArray: '' });
 		}

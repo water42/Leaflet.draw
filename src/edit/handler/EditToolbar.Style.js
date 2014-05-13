@@ -1,4 +1,4 @@
-// Color is depended on Jquery and Spectrum.js
+// Styleable is depended on Jquery and Spectrum.js
 // Spectrum was picked for the community support and features with pallets, alpha, touch and multi instance
 // This is included for demo only. You should grab the latest version
 // of it here: https://github.com/bgrins/spectrum
@@ -24,15 +24,15 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		this.type = L.EditToolbar.Styleable.TYPE;
 
 		this._setColor('#fe57a1', '0.2'); // Set color for all tools on load
-        this._setStroke(4);
-        this._createControls();
+		this._setStroke(4);
+		this._createControls();
 	},
 
 	enable: function () {
 	},
 
-    disable: function () {
-    },
+	disable: function () {
+	},
 
 	addHooks: function () {
 		//this.fire('enable');
@@ -41,39 +41,39 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	removeHooks: function () {
 	},
 	
-    _createControls: function () {
+	_createControls: function () {
 
-        var styleable = this._styleable,
-            selectStroke = this._createSelect(10);
+		var styleable = this._styleable,
+			selectStroke = this._createSelect(10);
 
-        selectStroke.addEventListener('change', function() {
-            styleable._setStroke(this.value); 
-        });
+		selectStroke.addEventListener('change', function() {
+			styleable._setStroke(this.value); 
+		});
 
-        $(document).ready(function(){ // initialize after dom creation
-            // Color is depended on Jquery and Spectrum.js
-            $('.leaflet-draw-edit-styleable').spectrum({
-                chooseText: 'Ok',
-                color: 'rgba(254,87,161,0.2)', //Hot pink all the things! 
-                showAlpha: true,
-                showPalette: true,
-                palette: [ ],
-                change: function(color) {
-                    styleable._setColor(color.toHexString(), color.alpha);
-                }
-            });
-            $('.leaflet-draw-edit-styleable').spectrum("container").append(selectStroke);
-        });
-    },
-	_createSelect: function (n) {
-        this._select = L.DomUtil.create('div', 'leaflet-draw-layer-edit-styleable-stroke')
-        
-        var label = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label');
-        label.textContent = 'Stroke Width:';
-        
-        
+		$(document).ready(function(){ // initialize after dom creation
+			// Color is depended on Jquery and Spectrum.js
+			$('.leaflet-draw-edit-styleable').spectrum({
+				chooseText: 'Ok',
+				color: 'rgba(254,87,161,0.2)', //Hot pink all the things! 
+				showAlpha: true,
+				showPalette: true,
+				palette: [ ],
+				change: function(color) {
+					styleable._setColor(color.toHexString(), color.alpha);
+				}
+			});
+
+			var controlContainer = L.DomUtil.create('div', 'leaflet-draw-layer-edit-styleable-stroke'),
+				label = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label');
+			label.textContent = 'Stroke Width:';
+			controlContainer.appendChild(label);
+			controlContainer.appendChild(selectStroke);
+
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(controlContainer);
+		});
+	},
+	_createSelect: function (n) { 
 		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-stroke-select');
-		//this._sel.setAttribute('class','');
 
 		for ( var i = 1; n >= i; i++) {
 			var opt = L.DomUtil.create("option",'stroke-size-' + i);
@@ -82,21 +82,21 @@ L.EditToolbar.Styleable = L.Handler.extend({
 			opt.text = i;
 			select.add(opt);
 		}
-        this._select.appendChild(label);
-        this._select.appendChild(select);
 
-		return this._select;
+		return select;
 	},
 
 	_setColor: function (color, opacity) {
-        // Edit selected item in edit mode
-        if (L.previousLayer != null ) {
-            L.previousLayer.setStyle({
-                color: color,
-                opacity: opacity
-            });
-            L.previousLayer.edited = true;
-        }
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			L.previousLayer.setStyle({
+				color: color,
+				opacity: opacity
+			});
+
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
 
 		// Use global var of toolbar that gets set on L.Control.Draw initialization
 		L.toolbarDraw.setDrawingOptions({ 
@@ -108,14 +108,17 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	},
 
 	_setStroke: function (weight) {
-        // Edit selected item in edit mode
-        if (L.previousLayer != null ) {
-            L.previousLayer.setStyle({
-                weight: weight
-            });
-            L.previousLayer.edited = true;
-        }
-
+		console.log(weight);
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			L.previousLayer.setStyle({
+				weight: weight
+			});
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+		
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
 		L.toolbarDraw.setDrawingOptions({ 
 			polyline: { shapeOptions: { weight: weight } },
 			polygon: { shapeOptions: { weight: weight } },
