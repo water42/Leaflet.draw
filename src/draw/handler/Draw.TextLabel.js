@@ -5,12 +5,10 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	options: {
 		icon: new L.divIcon({
-				className: 'count-icon',
-				// html here defines what goes in the div created for each marker
-				html: 'hi',
-				// and the marker width and height
-				iconSize: [40, 40]
-			}),
+			className: 'textlabel',
+			html: '<input type="text" placeholder="Text Goes Here" value="" class="textlabel-input"/><div class="textlabel-text"></div>',
+			iconSize: [20, 20]
+		}),
 		repeatMode: false,
 		zIndexOffset: 2000 // This should be > than the highest z-index any markers
 	},
@@ -20,6 +18,8 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		this.type = L.Draw.TextLabel.TYPE;
 
 		L.Draw.Feature.prototype.initialize.call(this, map, options);
+
+		this._map = map;
 	},
 
 	addHooks: function () {
@@ -96,7 +96,6 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	_onClick: function () {
 		this._fireCreatedEvent();
-
 		this.disable();
 		if (this.options.repeatMode) {
 			this.enable();
@@ -109,8 +108,60 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		this._onClick(); // permenantly places marker & ends interaction
 	},
 
+	_onFocus: function (e) {
+		var target = e.target,
+			child = target._icon.firstChild;
+		child.nextSibling.hidden = true;
+		child.hidden = false;
+		child.focus();
+
+		child.onblur = this._onBlur;
+	},
+
+	_onBlur: function (e) {
+		var target = e.target;
+		if ( target.value ){
+			target.hidden = true;
+			target.nextSibling.hidden = false;
+			target.nextSibling.textContent = target.value
+		}
+	},
+
 	_fireCreatedEvent: function () {
 		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
+
+		textLabel.on('click', this._onFocus, this);
+
 		L.Draw.Feature.prototype._fireCreatedEvent.call(this, textLabel);
+
+	},
+
+	//#TODO: use this instead of static icon
+	_createInput: function (text, className) {
+		var input = L.DomUtil.create('input', className, this._container);
+		input.type = 'text';
+		input.value = '';
+		input.placeholder = text;
+
+		L.DomEvent
+			.disableClickPropagation(input)
+			// .on(input, 'keyup', this._handleKeypress, this)
+			// .on(input, 'keydown', this._handleAutoresize, this)
+			.on(input, 'blur', function(){console.log('input blur')}, this)
+			.on(input, 'focus', function(){console.log('input focus')}, this);
+
+		return input;
+	},
+	
+	//#TODO: use this instead of static icon
+	_createDivIcon: function() {
+		var divIcon = new L.divIcon({
+			className: 'textlabel',
+			// html here defines what goes in the div created for each marker
+			html: this._createInput('Text Goes Here', 'textlabel'),
+			// and the marker width and height
+			iconSize: [40, 40]
+		});
+		return divIcon;
 	}
 });
