@@ -63,24 +63,25 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				}
 			});
 
-			var controlContainer = L.DomUtil.create('div', 'leaflet-draw-layer-edit-styleable-stroke'),
+			var controlContainer = L.DomUtil.create('div', 'sp-palette-container'),
 				label = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label');
-			label.textContent = 'Stroke Width:';
+			label.textContent = 'Stroke Width: ';
 			controlContainer.appendChild(label);
 			controlContainer.appendChild(selectStroke);
 
 			$('.leaflet-draw-edit-styleable').spectrum("container").append(controlContainer);
 		});
 	},
+
 	_createSelect: function (n) { 
 		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-stroke-select');
 
 		for ( var i = 1; n >= i; i++) {
-			var opt = L.DomUtil.create("option",'stroke-size-' + i);
-			opt.setAttribute('style','font-size: ' + i + 'px');
-			opt.value = i
-			opt.text = i;
-			select.add(opt);
+			var option = L.DomUtil.create("option",'stroke-size-' + i);
+			option.setAttribute('style','font-size: ' + i + 'px');
+			option.value = i
+			option.text = i;
+			select.add(option);
 		}
 
 		return select;
@@ -89,9 +90,10 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	_setColor: function (color, opacity) {
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
+			// #TODO: change opacity if it is just the polyline
 			L.previousLayer.setStyle({
 				color: color,
-				opacity: opacity
+				fillOpacity: opacity
 			});
 
 			L.previousLayer.edited = true;
@@ -108,7 +110,6 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	},
 
 	_setStroke: function (weight) {
-		console.log(weight);
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
 			L.previousLayer.setStyle({
