@@ -293,7 +293,7 @@
 	cursor: pointer;
 }
 
-.textlabel-input{ 
+.textlabel-textarea{ 
 	width: 200px;
 }
 
@@ -301,6 +301,7 @@
 	width: auto;
 	min-width: 200px;
 	max-width: 500px;
+	white-space: nowrap;
 }
 
 /* ================================================================== */

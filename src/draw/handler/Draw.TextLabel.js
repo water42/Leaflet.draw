@@ -4,13 +4,10 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 	},
 
 	options: {
-		icon: new L.divIcon({
-			className: 'textlabel',
-			html: '<input type="text" placeholder="Text Goes Here" value="" class="textlabel-input"/><div class="textlabel-text"></div>',
-			iconSize: [20, 20]
-		}),
 		repeatMode: false,
-		zIndexOffset: 2000 // This should be > than the highest z-index any markers
+		zIndexOffset: 2000, // This should be > than the highest z-index any markers
+        color: '#000000',
+        fontSize: '12px'
 	},
 
 	initialize: function (map, options) {
@@ -73,6 +70,9 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	_onMouseMove: function (e) {
 		var latlng = e.latlng;
+        
+        // Update Color and Font-size on initiate of tool
+        this.options.icon = this._createDivIcon();
 
 		this._tooltip.updatePosition(latlng);
 		this._mouseMarker.setLatLng(latlng);
@@ -111,29 +111,40 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 	_onFocus: function (e) {
 		var target = e.target,
 			child = target._icon.firstChild;
-		child.nextSibling.hidden = true;
-		child.hidden = false;
-		child.focus();
 
+		child.nextSibling.hidden = true; // hide text
+		child.hidden = false; // Show textarea
+
+		child.focus();
+        
+        // Call when done editing text
 		child.onblur = this._onBlur;
+        child.onkeyup = function(e){
+            if(e.keyIdentifier == "Enter"){
+                child.blur();
+            }
+        };
 	},
 
 	_onBlur: function (e) {
 		var target = e.target;
 		if ( target.value ){
-			target.hidden = true;
-			target.nextSibling.hidden = false;
-			target.nextSibling.textContent = target.value
+			target.hidden = true; // hide textarea
+			target.nextSibling.hidden = false; // show text
+
+			target.nextSibling.textContent = target.value // update text with textarea value
 		}
 	},
 
 	_fireCreatedEvent: function () {
+        // #TODO: get textarea's width and height and use that to set the label's container for word wrapping
+        // currently, css is set to white-space: nowrap
+
 		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
 
 		textLabel.on('click', this._onFocus, this);
 
 		L.Draw.Feature.prototype._fireCreatedEvent.call(this, textLabel);
-
 	},
 
 	//#TODO: use this instead of static icon
@@ -158,7 +169,8 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var divIcon = new L.divIcon({
 			className: 'textlabel',
 			// html here defines what goes in the div created for each marker
-			html: this._createInput('Text Goes Here', 'textlabel'),
+            // #TODO: have a cleaner approach to html
+			html: '<textarea class="textlabel-textarea" style="color:' + this.options.color + ';font-size:' + this.options.fontSize + ';" ></textarea><div class="textlabel-text" style="color:' + this.options.color + ';font-size:' + this.options.fontSize + ';"></div>',
 			// and the marker width and height
 			iconSize: [40, 40]
 		});

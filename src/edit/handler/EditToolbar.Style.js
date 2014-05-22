@@ -44,10 +44,15 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	_createControls: function () {
 
 		var styleable = this._styleable,
-			selectStroke = this._createSelect(10);
+			selectStroke = this._createSelect(20),
+			selectFontSize = this._createSelect(50);
 
 		selectStroke.addEventListener('change', function() {
 			styleable._setStroke(this.value); 
+		});
+		
+		selectFontSize.addEventListener('change', function() {
+			styleable._setFontSize(this.value); 
 		});
 
 		$(document).ready(function(){ // initialize after dom creation
@@ -63,21 +68,29 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				}
 			});
 
-			var controlContainer = L.DomUtil.create('div', 'sp-palette-container'),
-				label = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label');
-			label.textContent = 'Stroke Width: ';
-			controlContainer.appendChild(label);
-			controlContainer.appendChild(selectStroke);
+			var polyControlsContainer = textControlsContainer = L.DomUtil.create('div', 'sp-palette-container'),
+				strokelabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
+				fontlabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-font-label');
 
-			$('.leaflet-draw-edit-styleable').spectrum("container").append(controlContainer);
+			strokelabel.textContent = 'Stroke Width: ';
+			polyControlsContainer.appendChild(strokelabel);
+			polyControlsContainer.appendChild(selectStroke);
+			
+			fontlabel.textContent = 'Font Size: ';
+			textControlsContainer.appendChild(fontlabel);
+			textControlsContainer.appendChild(selectFontSize);
+
+			$('.leaflet-draw-edit-styleable').spectrum("container")
+				.append(polyControlsContainer)
+				.append(textControlsContainer);
 		});
 	},
 
 	_createSelect: function (n) { 
-		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-stroke-select');
+		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-select');
 
 		for ( var i = 1; n >= i; i++) {
-			var option = L.DomUtil.create("option",'stroke-size-' + i);
+			var option = L.DomUtil.create("option",'size-' + i);
 			option.setAttribute('style','font-size: ' + i + 'px');
 			option.value = i
 			option.text = i;
@@ -85,6 +98,24 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		}
 
 		return select;
+	},
+	
+	_setFontSize: function (size) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			// #TODO: change opacity if it is just the polyline
+			L.previousLayer.setStyle({
+				fontSize: size
+			});
+
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		L.toolbarDraw.setDrawingOptions({ 
+			textlabel: { fontSize: size + 'px' }
+		});
 	},
 
 	_setColor: function (color, opacity) {
@@ -105,7 +136,8 @@ L.EditToolbar.Styleable = L.Handler.extend({
 			polyline: { shapeOptions: { color: color, opacity: opacity } },
 			polygon: { shapeOptions: { color: color, fillOpacity: opacity } },
 			rectangle: { shapeOptions: { color: color, fillOpacity: opacity } },
-			circle: { shapeOptions: { color: color, fillOpacity: opacity } }
+			circle: { shapeOptions: { color: color, fillOpacity: opacity } },
+			textlabel: { color: color }
 		});
 	},
 
