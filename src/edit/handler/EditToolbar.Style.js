@@ -68,21 +68,30 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				}
 			});
 
-			var polyControlsContainer = textControlsContainer = L.DomUtil.create('div', 'sp-palette-container'),
+			var polyControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container'),
+				textControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container'),
+				polylegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				textlegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
 				strokelabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
 				fontlabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-font-label');
-
+			
+			polylegend.textContent = 'Ploy Shape Settings';
 			strokelabel.textContent = 'Stroke Width: ';
+			
+			textlegend.textContent = 'Font Settings';
+			fontlabel.textContent = 'Font Size: ';
+			
+			polyControlsContainer.appendChild(polylegend);
 			polyControlsContainer.appendChild(strokelabel);
 			polyControlsContainer.appendChild(selectStroke);
 			
-			fontlabel.textContent = 'Font Size: ';
+			textControlsContainer.appendChild(textlegend);
 			textControlsContainer.appendChild(fontlabel);
 			textControlsContainer.appendChild(selectFontSize);
 
-			$('.leaflet-draw-edit-styleable').spectrum("container")
-				.append(polyControlsContainer)
-				.append(textControlsContainer);
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(polyControlsContainer);
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(textControlsContainer);
+				
 		});
 	},
 

@@ -307,6 +307,11 @@
 /* ================================================================== */
 /* Colorable styles ( Spectrum.js )
 /* ================================================================== */
+div.sp-palette-container,
+fieldset.sp-palette-container{
+	float: none;
+	display: block;
+}
 
 .sp-replacer {
 	padding: 3px;
