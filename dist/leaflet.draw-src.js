@@ -1070,7 +1070,7 @@ L.Draw.Marker = L.Draw.Feature.extend({
 	},
 
 	_fireCreatedEvent: function () {
-		var marker = new L.Marker(this._marker.getLatLng(), { icon: this.options.icon });
+		var marker = new L.Marker.Touch(this._marker.getLatLng(), { icon: this.options.icon });
 		L.Draw.Feature.prototype._fireCreatedEvent.call(this, marker);
 	}
 });
@@ -1225,7 +1225,7 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
 		// currently, css is set to white-space: nowrap
 
-		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
+		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { icon: this.options.icon });
 
 		textLabel.on('click', this._onFocus, this);
 
@@ -3052,6 +3052,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 		L.Handler.prototype.disable.call(this);
 		this._map.fire('draw:editstop', { handler: this.type });
 		this.fire('disabled', {handler: this.type});
+		$('.leaflet-draw-edit-styleable').spectrum("hide"); // show style controls to let user know of possible changes
 	},
 
 	addHooks: function () {
@@ -3205,7 +3206,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 			}
 
 			if (isMarker) {
-				layer.options.previousOptions = L.Util.extend(layer.options);
+				layer.options.previousOptions = L.Util.extend({color: layer.options.color, fontSize: layer.options.fontSize});
 				this._toggleMarkerHighlight(layer);
 			} else {
 				layer.options.previousOptions = L.Util.extend({ dashArray: null }, layer.options);
@@ -3221,7 +3222,11 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 		if (isMarker) {
 			layer.dragging.enable();
-			layer.on('dragend', this._onMarkerDragEnd);
+			layer
+				.on('dragend', this._onMarkerDragEnd)
+				// #TODO: remove when leaflet finally fixes their draggable so it's touch friendly again.
+				.on('touchmove', this._onTouchMove, this)
+				.on('touchend', this._onMarkerDragEnd, this);
 		} else {
 			layer.editing.enable();
 		}
@@ -3240,7 +3245,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 				layer._icon.classList.remove('leaflet-edit-marker-editable');
 
 				if (!layer.styled) {
-					layer._icon.style.color = layer.options.color =layer.options.previousOptions.color;
+					layer._icon.style.color = layer.options.color = layer.options.previousOptions.color;
 					layer._icon.style.fontSize = layer.options.fontSize = layer.options.previousOptions.fontSize;
 				}
 			} else {
@@ -3263,7 +3268,10 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 		if (layer instanceof L.Marker) {
 			layer.dragging.disable();
-			layer.off('dragend', this._onMarkerDragEnd, this);
+			layer
+				.off('dragend', this._onMarkerDragEnd, this)
+				.off('touchmove', this._onTouchMove, this)
+				.off('touchend', this._onMarkerDragEnd, this);
 		} else {
 			layer.editing.disable();
 		}
@@ -3278,6 +3286,13 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_onMouseMove: function (e) {
 		this._tooltip.updatePosition(e.latlng);
+	},
+
+	_onTouchMove: function (e){
+		var touchEvent = e.originalEvent.changedTouches[0],
+			layerPoint = this._map.mouseEventToLayerPoint(touchEvent),
+			latlng = this._map.layerPointToLatLng(layerPoint);
+		e.target.setLatLng(latlng);
 	},
 
 	_editStyle: function (e) {
@@ -3319,7 +3334,6 @@ L.EditToolbar.Edit = L.Handler.extend({
 		// layer.options.color
 		// layer.options.opacity
 		// layer.options.weight
-		
 	},
 
 	_hasAvailableLayers: function () {
@@ -3518,7 +3532,10 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				showAlpha: true,
 				showPalette: true,
 				palette: [ ],
-				change: function(color) {
+				allowEmpty:true,
+			    chooseText: "Close",
+			    cancelText: "",
+				move: function(color) {
 					styleable._setColor(color.toHexString(), color.alpha);
 				}
 			});
@@ -3589,7 +3606,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
 			if (L.previousLayer instanceof L.Marker) {
-				L.previousLayer._icon.style.color = color;
+				L.previousLayer._icon.style.color = L.previousLayer.options.color = color;
 			} else {
 				// #TODO: change opacity if it is just the polyline
 				L.previousLayer.setStyle({
