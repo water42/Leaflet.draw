@@ -25,6 +25,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 
 		this._setColor('#fe57a1', '0.2'); // Set color for all tools on load
 		this._setStroke(4);
+		this._setFontSize(12)
 		this._createControls();
 	},
 
@@ -68,8 +69,8 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				}
 			});
 
-			var polyControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container'),
-				textControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container'),
+			var polyControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container poly-controls'),
+				textControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container text-controls'),
 				polylegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
 				textlegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
 				strokelabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
@@ -113,7 +114,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
 			if (L.previousLayer instanceof L.Marker) {
-				L.previousLayer._icon.style.fontSize = size + 'px';
+				L.previousLayer._icon.style.fontSize = L.previousLayer.options.fontSize = size + 'px';
 			} else {
 				// #TODO: change opacity if it is just the polyline
 				L.previousLayer.setStyle({

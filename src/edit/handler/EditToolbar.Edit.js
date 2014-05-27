@@ -201,6 +201,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 			}
 
 			if (isMarker) {
+				layer.options.previousOptions = L.Util.extend(layer.options);
 				this._toggleMarkerHighlight(layer);
 			} else {
 				layer.options.previousOptions = L.Util.extend({ dashArray: null }, layer.options);
@@ -221,7 +222,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 			layer.editing.enable();
 		}
 		
-		layer.on('click', this._editStyle, this);
+		layer.on('click', this._editStyle, this); // on click show styles in style controls
 	},
 
 	_disableLayerEdit: function (e) {
@@ -230,7 +231,14 @@ L.EditToolbar.Edit = L.Handler.extend({
 		// Reset layer styles to that of before select
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
-				this._toggleMarkerHighlight(layer);
+				//this._toggleMarkerHighlight(layer);
+				layer._icon.classList.remove('leaflet-edit-marker-selected');
+				layer._icon.classList.remove('leaflet-edit-marker-editable');
+
+				if (!layer.styled) {
+					layer._icon.style.color = layer.options.color =layer.options.previousOptions.color;
+					layer._icon.style.fontSize = layer.options.fontSize = layer.options.previousOptions.fontSize;
+				}
 			} else {
 				if (layer.edited) {
 					return;
@@ -254,8 +262,9 @@ L.EditToolbar.Edit = L.Handler.extend({
 			layer.off('dragend', this._onMarkerDragEnd, this);
 		} else {
 			layer.editing.disable();
-			layer.off('click', this._editStyle, this);
 		}
+
+		layer.off('click', this._editStyle, this);
 	},
 
 	_onMarkerDragEnd: function (e) {
@@ -282,21 +291,26 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 		if (layer instanceof L.Marker) {
 			L.previousLayer = layer;
-
+			
+			// select marker
 			layer._icon.classList.remove('leaflet-edit-marker-editable');
 			layer._icon.classList.add('leaflet-edit-marker-selected');
+			
+			// #TODO: don't use jquery 
+			$('.leaflet-draw-edit-styleable').spectrum("set", layer._icon.style.color); // set color from selected object
+			$('.text-controls select').val(layer._icon.style.fontSize.replace('px','')); // set font size from selected object
+			$('.leaflet-draw-edit-styleable').spectrum("show");	// show style controls to let user know of possible changes
 
-			$('.leaflet-draw-edit-styleable').spectrum("set", layer._icon.style.color);
-			$('.leaflet-draw-edit-styleable').spectrum("show");	
 			return;
 		}
 
 		L.previousLayer = layer; // set previous item
-
+		
+		// #TODO: don't use jquery
 		layer.setStyle({ dashArray: '10, 10' }); // select item
-		debugger;
-		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color);
-		$('.leaflet-draw-edit-styleable').spectrum("show");
+		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color); // set color from selected object
+		$('.poly-controls select').val(layer.options.weight); // set stroke size from selected object
+		$('.leaflet-draw-edit-styleable').spectrum("show"); // show style controls to let user know of possible changes
 		
 		// layer.options.color
 		// layer.options.opacity

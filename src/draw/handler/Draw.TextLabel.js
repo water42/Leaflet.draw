@@ -112,8 +112,12 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var target = e.target,
 			child = target._icon.firstChild;
 
-        target._icon.style.fontSize = this.options.fontSize;
-        target._icon.style.color = this.options.color;        
+		// change styles
+		if ( target.options.fontSize == undefined || target.options.color == undefined) {
+	        target._icon.style.fontSize = target.options.fontSize = this.options.fontSize;
+	        target._icon.style.color = target.options.color = this.options.color;
+		}
+ 
 
 		child.nextSibling.hidden = true; // hide text
 		child.hidden = false; // Show textarea
