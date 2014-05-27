@@ -112,7 +112,7 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var target = e.target,
 			child = target._icon.firstChild;
 
-		// change styles
+		// If it's been created, don't reset the color or fontsize based on the global setting
 		if ( target.options.fontSize == undefined || target.options.color == undefined) {
 	        target._icon.style.fontSize = target.options.fontSize = this.options.fontSize;
 	        target._icon.style.color = target.options.color = this.options.color;

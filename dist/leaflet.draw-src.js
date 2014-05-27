@@ -1076,6 +1076,194 @@ L.Draw.Marker = L.Draw.Feature.extend({
 });
 
 
+L.Draw.TextLabel = L.Draw.Feature.extend({
+	statics: {
+		TYPE: 'textlabel'
+	},
+
+	options: {
+		repeatMode: false,
+		zIndexOffset: 2000, // This should be > than the highest z-index any markers
+		color: '#000000',
+		fontSize: '12px'
+	},
+
+	initialize: function (map, options) {
+		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
+		this.type = L.Draw.TextLabel.TYPE;
+
+		L.Draw.Feature.prototype.initialize.call(this, map, options);
+
+		this._map = map;
+	},
+
+	addHooks: function () {
+		L.Draw.Feature.prototype.addHooks.call(this);
+
+		//if (this._map){this._tooltip.updateContent({ text: L.drawLocal.draw.handlers.textlabel.tooltip.start });
+		if (this._map){this._tooltip.updateContent({ text: 'Text Label' });
+
+			// Same mouseMarker as in Draw.Polyline
+			if (!this._mouseMarker) {
+				this._mouseMarker = L.marker(this._map.getCenter(), {
+					icon: L.divIcon({
+						className: 'leaflet-textlabel',
+						iconAnchor: [20, 20],
+						iconSize: [40, 40]
+					}),
+					opacity: 0,
+					zIndexOffset: this.options.zIndexOffset
+				});
+			}
+
+			this._mouseMarker
+				.on('click', this._onClick, this)
+				.addTo(this._map);
+
+			this._map.on('mousemove', this._onMouseMove, this);
+			this._map.on('click', this._onTouch, this);
+		}
+	},
+
+	removeHooks: function () {
+		L.Draw.Feature.prototype.removeHooks.call(this);
+
+		if (this._map) {
+			if (this._textlabel) {
+				this._textlabel.off('click', this._onClick, this);
+				this._map
+					.off('click', this._onClick, this)
+					.off('click', this._onTouch, this)
+					.removeLayer(this._textlabel);
+				delete this._textlabel;
+			}
+
+			this._mouseMarker.off('click', this._onClick, this);
+			this._map.removeLayer(this._mouseMarker);
+			delete this._mouseMarker;
+
+			this._map.off('mousemove', this._onMouseMove, this);
+		}
+	},
+
+	_onMouseMove: function (e) {
+		var latlng = e.latlng;
+		
+		// Update Color and Font-size on initiate of tool
+		this.options.icon = this._createDivIcon();
+
+		this._tooltip.updatePosition(latlng);
+		this._mouseMarker.setLatLng(latlng);
+
+		if (!this._textlabel) {
+			this._textlabel = new L.Marker(latlng, {
+				icon: this.options.icon,
+				zIndexOffset: this.options.zIndexOffset
+			});
+			// Bind to both marker and map to make sure we get the click event.
+			this._textlabel.on('click', this._onClick, this);
+			this._map
+				.on('click', this._onClick, this)
+				.addLayer(this._textlabel);
+		}
+		else {
+			latlng = this._mouseMarker.getLatLng();
+			this._textlabel.setLatLng(latlng);
+		}
+	},
+
+	_onClick: function () {
+		this._fireCreatedEvent();
+		this.disable();
+		if (this.options.repeatMode) {
+			this.enable();
+		}
+	},
+
+	_onTouch: function (e) {
+		// called on click & tap, only really does any thing on tap
+		this._onMouseMove(e); // creates & places marker
+		this._onClick(); // permenantly places marker & ends interaction
+	},
+
+	_onFocus: function (e) {
+		var target = e.target,
+			child = target._icon.firstChild;
+
+		// If it's been created, don't reset the color or fontsize based on the global setting
+		if ( target.options.fontSize == undefined || target.options.color == undefined) {
+	        target._icon.style.fontSize = target.options.fontSize = this.options.fontSize;
+	        target._icon.style.color = target.options.color = this.options.color;
+		}
+ 
+
+		child.nextSibling.hidden = true; // hide text
+		child.hidden = false; // Show textarea
+
+		child.focus();
+		
+		// Call when done editing text
+		child.onblur = this._onBlur;
+		child.onkeyup = function(e){
+			if(e.keyIdentifier == "Enter"){
+				child.blur();
+			}
+		};
+	},
+
+	_onBlur: function (e) {
+		var target = e.target;
+		if ( target.value ){
+			target.hidden = true; // hide textarea
+			target.nextSibling.hidden = false; // show text
+
+			target.nextSibling.textContent = target.value // update text with textarea value
+		}
+	},
+
+	_fireCreatedEvent: function () {
+		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
+		// currently, css is set to white-space: nowrap
+
+		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
+
+		textLabel.on('click', this._onFocus, this);
+
+		L.Draw.Feature.prototype._fireCreatedEvent.call(this, textLabel);
+	},
+
+	//#TODO: use this instead of static icon
+	_createInput: function (text, className) {
+		var input = L.DomUtil.create('input', className, this._container);
+		input.type = 'text';
+		input.value = '';
+		input.placeholder = text;
+
+		L.DomEvent
+			.disableClickPropagation(input)
+			// .on(input, 'keyup', this._handleKeypress, this)
+			// .on(input, 'keydown', this._handleAutoresize, this)
+			.on(input, 'blur', function(){console.log('input blur')}, this)
+			.on(input, 'focus', function(){console.log('input focus')}, this);
+
+		return input;
+	},
+	
+	//#TODO: use this instead of static icon
+	_createDivIcon: function() {
+		var divIcon = new L.divIcon({
+			className: 'textlabel',
+			// html here defines what goes in the div created for each marker
+			// #TODO: have a cleaner approach to html
+			html: '<textarea class="textlabel-textarea"></textarea><div class="textlabel-text"></div>',
+			// and the marker width and height
+			iconSize: [40, 40]
+		});
+		return divIcon;
+	}
+});
+
+
 L.Edit = L.Edit || {};
 
 /*
@@ -2136,7 +2324,7 @@ L.Control.Draw = L.Control.extend({
 
 		L.Control.prototype.initialize.call(this, options);
 
-		var toolbar;
+		var toolbarDraw;
 
 		this._toolbars = {};
 
@@ -2158,7 +2346,7 @@ L.Control.Draw = L.Control.extend({
 			// Listen for when toolbar is enabled
 			this._toolbars[L.EditToolbar.TYPE].on('enable', this._toolbarEnabled, this);
 		}
-		L.toolbar = this; //set global var for editing the toolbar
+		L.toolbarDraw = this; //set global var for editing the toolbar
 	},
 
 	onAdd: function (map) {
@@ -2553,7 +2741,8 @@ L.DrawToolbar = L.Toolbar.extend({
 		polygon: {},
 		rectangle: {},
 		circle: {},
-		marker: {}
+		marker: {},
+		textlabel: {}
 	},
 
 	initialize: function (options) {
@@ -2596,6 +2785,11 @@ L.DrawToolbar = L.Toolbar.extend({
 				enabled: this.options.marker,
 				handler: new L.Draw.Marker(map, this.options.marker),
 				title: L.drawLocal.draw.toolbar.buttons.marker
+			},
+			{
+				enabled: this.options.textlabel,
+				handler: new L.Draw.TextLabel(map, this.options.textlabel),
+				title: L.drawLocal.draw.toolbar.buttons.textlabel
 			}
 		];
 	},
@@ -2661,7 +2855,8 @@ L.EditToolbar = L.Toolbar.extend({
 			}
 		},
 		remove: {},
-		featureGroup: null /* REQUIRED! TODO: perhaps if not set then all layers on the map are selectable? */
+		featureGroup: null, /* REQUIRED! TODO: perhaps if not set then all layers on the map are selectable? */
+		styleable: false /* REQUIRES Jquery and Spectrum.js*/
 	},
 
 	initialize: function (options) {
@@ -2675,6 +2870,10 @@ L.EditToolbar = L.Toolbar.extend({
 
 		if (options.remove) {
 			options.remove = L.extend({}, this.options.remove, options.remove);
+		}
+		
+		if (options.styleable) {
+			options.styleable = L.extend({}, this.options.styleable, options.styleable);
 		}
 
 		this._toolbarClass = 'leaflet-draw-edit';
@@ -2697,6 +2896,13 @@ L.EditToolbar = L.Toolbar.extend({
 			{
 				enabled: this.options.remove,
 				handler: new L.EditToolbar.Delete(map, {
+					featureGroup: featureGroup
+				}),
+				title: L.drawLocal.edit.toolbar.buttons.remove
+			},
+			{
+				enabled: this.options.styleable,
+				handler: new L.EditToolbar.Styleable(map, {
 					featureGroup: featureGroup
 				}),
 				title: L.drawLocal.edit.toolbar.buttons.remove
@@ -2788,6 +2994,10 @@ L.EditToolbar = L.Toolbar.extend({
 				: L.drawLocal.edit.toolbar.buttons.removeDisabled
 			);
 		}
+
+		if (this.options.styleable) {
+			button = this._modes[L.EditToolbar.Styleable.TYPE].button;
+		}
 	}
 });
 
@@ -2860,8 +3070,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 			this._map
 				.on('mousemove', this._onMouseMove, this)
-				.on('touchmove', this._onMouseMove, this)
-				.on('click', this._editStyle, this);
+				.on('touchmove', this._onMouseMove, this);
 		}
 	},
 
@@ -2891,6 +3100,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	save: function () {
 		var editedLayers = new L.LayerGroup();
 		this._featureGroup.eachLayer(function (layer) {
+
 			if (layer.edited) {
 				editedLayers.addLayer(layer);
 				layer.edited = false;
@@ -2924,6 +3134,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	_revertLayer: function (layer) {
 		var id = L.Util.stamp(layer);
 		layer.edited = false;
+		layer.styled = false;
 		if (this._uneditedLayerProps.hasOwnProperty(id)) {
 			// Polyline, Polygon or Rectangle
 			if (layer instanceof L.Polyline || layer instanceof L.Polygon || layer instanceof L.Rectangle) {
@@ -2946,13 +3157,13 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 		icon.style.display = 'none';
 
-		if (L.DomUtil.hasClass(icon, 'leaflet-edit-marker-selected')) {
-			L.DomUtil.removeClass(icon, 'leaflet-edit-marker-selected');
+		if (L.DomUtil.hasClass(icon, 'leaflet-edit-marker-editable')) {
+			L.DomUtil.removeClass(icon, 'leaflet-edit-marker-editable');
 			// Offset as the border will make the icon move.
 			this._offsetMarker(icon, -4);
 
 		} else {
-			L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
+			L.DomUtil.addClass(icon, 'leaflet-edit-marker-editable');
 			// Offset as the border will make the icon move.
 			this._offsetMarker(icon, 4);
 		}
@@ -2994,6 +3205,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 			}
 
 			if (isMarker) {
+				layer.options.previousOptions = L.Util.extend(layer.options);
 				this._toggleMarkerHighlight(layer);
 			} else {
 				layer.options.previousOptions = L.Util.extend({ dashArray: null }, layer.options);
@@ -3002,8 +3214,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 				if (!(layer instanceof L.Circle) && !(layer instanceof L.Polygon) && !(layer instanceof L.Rectangle)) {
 					pathOptions.fill = false;
 				}
-
-				layer.setStyle(pathOptions);
+				
+				//layer.setStyle(pathOptions); //uncomment to revert to edit styles
 			}
 		}
 
@@ -3013,21 +3225,39 @@ L.EditToolbar.Edit = L.Handler.extend({
 		} else {
 			layer.editing.enable();
 		}
+		
+		layer.on('click', this._editStyle, this); // on click show styles in style controls
 	},
 
 	_disableLayerEdit: function (e) {
 		var layer = e.layer || e.target || e;
-		layer.edited = false;
 
 		// Reset layer styles to that of before select
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
-				this._toggleMarkerHighlight(layer);
+				//this._toggleMarkerHighlight(layer);
+				layer._icon.classList.remove('leaflet-edit-marker-selected');
+				layer._icon.classList.remove('leaflet-edit-marker-editable');
+
+				if (!layer.styled) {
+					layer._icon.style.color = layer.options.color =layer.options.previousOptions.color;
+					layer._icon.style.fontSize = layer.options.fontSize = layer.options.previousOptions.fontSize;
+				}
 			} else {
-				// reset the layer style to what is was before being selected
-				layer.setStyle(layer.options.previousOptions);
+				if (layer.edited) {
+					return;
+				} else {
+					if(!layer.styled) {
+						// reset the layer style to what is was before being selected
+						layer.setStyle(layer.options.previousOptions);
+					}
+				}
 				// remove the cached options for the layer object
 				delete layer.options.previousOptions;
+				layer.setStyle({ dashArray: '' });
+				layer.edited = false;
+				layer.styled = false;
+				L.previousLayer = null;
 			}
 		}
 
@@ -3037,6 +3267,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 		} else {
 			layer.editing.disable();
 		}
+
+		layer.off('click', this._editStyle, this);
 	},
 
 	_onMarkerDragEnd: function (e) {
@@ -3046,6 +3278,48 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_onMouseMove: function (e) {
 		this._tooltip.updatePosition(e.latlng);
+	},
+
+	_editStyle: function (e) {
+		var layer = e.layer || e.target || e;
+		
+		// unselect previous item
+		if (L.previousLayer != null) {
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.classList.remove('leaflet-edit-marker-selected');
+				L.previousLayer._icon.classList.add('leaflet-edit-marker-editable');
+			} else {
+				L.previousLayer.setStyle({ dashArray: '' });
+			}
+		}
+
+		if (layer instanceof L.Marker) {
+			L.previousLayer = layer;
+			
+			// select marker
+			layer._icon.classList.remove('leaflet-edit-marker-editable');
+			layer._icon.classList.add('leaflet-edit-marker-selected');
+			
+			// #TODO: don't use jquery 
+			$('.leaflet-draw-edit-styleable').spectrum("set", layer._icon.style.color); // set color from selected object
+			$('.text-controls select').val(layer._icon.style.fontSize.replace('px','')); // set font size from selected object
+			$('.leaflet-draw-edit-styleable').spectrum("show");	// show style controls to let user know of possible changes
+
+			return;
+		}
+
+		L.previousLayer = layer; // set previous item
+		
+		// #TODO: don't use jquery
+		layer.setStyle({ dashArray: '10, 10' }); // select item
+		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color); // set color from selected object
+		$('.poly-controls select').val(layer.options.weight); // set stroke size from selected object
+		$('.leaflet-draw-edit-styleable').spectrum("show"); // show style controls to let user know of possible changes
+		
+		// layer.options.color
+		// layer.options.opacity
+		// layer.options.weight
+		
 	},
 
 	_hasAvailableLayers: function () {
@@ -3177,5 +3451,185 @@ L.EditToolbar.Delete = L.Handler.extend({
 	}
 });
 
+
+// Styleable is depended on Jquery and Spectrum.js
+// Spectrum was picked for the community support and features with pallets, alpha, touch and multi instance
+// This is included for demo only. You should grab the latest version
+// of it here: https://github.com/bgrins/spectrum
+// Specrum is dependent on jquery but that's cool :P
+
+L.EditToolbar.Styleable = L.Handler.extend({
+	statics: {
+		TYPE: 'styleable'
+	},
+
+	includes: L.Mixin.Events,
+
+	initialize: function (map, options) {
+		this._styleable = this; // cache this to target in jquery
+		
+		L.Handler.prototype.initialize.call(this, map);
+
+		L.Util.setOptions(this, options);
+		
+		this._map = map;
+
+		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
+		this.type = L.EditToolbar.Styleable.TYPE;
+
+		this._setColor('#fe57a1', '0.2'); // Set color for all tools on load
+		this._setStroke(4);
+		this._setFontSize(12)
+		this._createControls();
+	},
+
+	enable: function () {
+	},
+
+	disable: function () {
+	},
+
+	addHooks: function () {
+		//this.fire('enable');
+	},
+	
+	removeHooks: function () {
+	},
+	
+	_createControls: function () {
+
+		var styleable = this._styleable,
+			selectStroke = this._createSelect(20),
+			selectFontSize = this._createSelect(50);
+
+		selectStroke.addEventListener('change', function() {
+			styleable._setStroke(this.value); 
+		});
+		
+		selectFontSize.addEventListener('change', function() {
+			styleable._setFontSize(this.value); 
+		});
+
+		$(document).ready(function(){ // initialize after dom creation
+			// Color is depended on Jquery and Spectrum.js
+			$('.leaflet-draw-edit-styleable').spectrum({
+				chooseText: 'Ok',
+				color: 'rgba(254,87,161,0.2)', //Hot pink all the things! 
+				showAlpha: true,
+				showPalette: true,
+				palette: [ ],
+				change: function(color) {
+					styleable._setColor(color.toHexString(), color.alpha);
+				}
+			});
+
+			var polyControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container poly-controls'),
+				textControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container text-controls'),
+				polylegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				textlegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				strokelabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
+				fontlabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-font-label');
+			
+			polylegend.textContent = 'Ploy Shape Settings';
+			strokelabel.textContent = 'Stroke Width: ';
+			
+			textlegend.textContent = 'Font Settings';
+			fontlabel.textContent = 'Font Size: ';
+			
+			polyControlsContainer.appendChild(polylegend);
+			polyControlsContainer.appendChild(strokelabel);
+			polyControlsContainer.appendChild(selectStroke);
+			
+			textControlsContainer.appendChild(textlegend);
+			textControlsContainer.appendChild(fontlabel);
+			textControlsContainer.appendChild(selectFontSize);
+
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(polyControlsContainer);
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(textControlsContainer);
+				
+		});
+	},
+
+	_createSelect: function (n) { 
+		var select = L.DomUtil.create('select','leaflet-draw-layer-edit-styleable-select');
+
+		for ( var i = 1; n >= i; i++) {
+			var option = L.DomUtil.create("option",'size-' + i);
+			option.setAttribute('style','font-size: ' + i + 'px');
+			option.value = i
+			option.text = i;
+			select.add(option);
+		}
+
+		return select;
+	},
+	
+	_setFontSize: function (size) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.fontSize = L.previousLayer.options.fontSize = size + 'px';
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					fontSize: size
+				});
+			}
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		L.toolbarDraw.setDrawingOptions({ 
+			textlabel: { fontSize: size + 'px' }
+		});
+	},
+
+	_setColor: function (color, opacity) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.color = color;
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					color: color,
+					fillOpacity: opacity
+				});
+			}
+
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		L.toolbarDraw.setDrawingOptions({ 
+			polyline: { shapeOptions: { color: color, opacity: opacity } },
+			polygon: { shapeOptions: { color: color, fillOpacity: opacity } },
+			rectangle: { shapeOptions: { color: color, fillOpacity: opacity } },
+			circle: { shapeOptions: { color: color, fillOpacity: opacity } },
+			textlabel: { color: color }
+		});
+	},
+
+	_setStroke: function (weight) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			L.previousLayer.setStyle({
+				weight: weight
+			});
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+		
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		L.toolbarDraw.setDrawingOptions({ 
+			polyline: { shapeOptions: { weight: weight } },
+			polygon: { shapeOptions: { weight: weight } },
+			rectangle: { shapeOptions: { weight: weight } },
+			circle: { shapeOptions: { weight: weight } }
+		});
+	},
+});
 
 }(window, document));
