@@ -147,7 +147,7 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
 		// currently, css is set to white-space: nowrap
 
-		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
+		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { icon: this.options.icon });
 
 		textLabel.on('click', this._onFocus, this);
 

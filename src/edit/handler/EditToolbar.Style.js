@@ -135,7 +135,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
 			if (L.previousLayer instanceof L.Marker) {
-				L.previousLayer._icon.style.color = color;
+				L.previousLayer._icon.style.color = L.previousLayer.options.color = color;
 			} else {
 				// #TODO: change opacity if it is just the polyline
 				L.previousLayer.setStyle({
