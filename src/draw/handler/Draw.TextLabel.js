@@ -6,8 +6,8 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 	options: {
 		repeatMode: false,
 		zIndexOffset: 2000, // This should be > than the highest z-index any markers
-        color: '#000000',
-        fontSize: '12px'
+		color: '#000000',
+		fontSize: '12px'
 	},
 
 	initialize: function (map, options) {
@@ -70,9 +70,9 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	_onMouseMove: function (e) {
 		var latlng = e.latlng;
-        
-        // Update Color and Font-size on initiate of tool
-        this.options.icon = this._createDivIcon();
+		
+		// Update Color and Font-size on initiate of tool
+		this.options.icon = this._createDivIcon();
 
 		this._tooltip.updatePosition(latlng);
 		this._mouseMarker.setLatLng(latlng);
@@ -112,18 +112,21 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var target = e.target,
 			child = target._icon.firstChild;
 
+        target._icon.style.fontSize = this.options.fontSize;
+        target._icon.style.color = this.options.color;        
+
 		child.nextSibling.hidden = true; // hide text
 		child.hidden = false; // Show textarea
 
 		child.focus();
-        
-        // Call when done editing text
+		
+		// Call when done editing text
 		child.onblur = this._onBlur;
-        child.onkeyup = function(e){
-            if(e.keyIdentifier == "Enter"){
-                child.blur();
-            }
-        };
+		child.onkeyup = function(e){
+			if(e.keyIdentifier == "Enter"){
+				child.blur();
+			}
+		};
 	},
 
 	_onBlur: function (e) {
@@ -137,8 +140,8 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 	},
 
 	_fireCreatedEvent: function () {
-        // #TODO: get textarea's width and height and use that to set the label's container for word wrapping
-        // currently, css is set to white-space: nowrap
+		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
+		// currently, css is set to white-space: nowrap
 
 		var textLabel = new L.Marker(this._textlabel.getLatLng(), { icon: this.options.icon });
 
@@ -169,8 +172,8 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var divIcon = new L.divIcon({
 			className: 'textlabel',
 			// html here defines what goes in the div created for each marker
-            // #TODO: have a cleaner approach to html
-			html: '<textarea class="textlabel-textarea" style="color:' + this.options.color + ';font-size:' + this.options.fontSize + ';" ></textarea><div class="textlabel-text" style="color:' + this.options.color + ';font-size:' + this.options.fontSize + ';"></div>',
+			// #TODO: have a cleaner approach to html
+			html: '<textarea class="textlabel-textarea"></textarea><div class="textlabel-text"></div>',
 			// and the marker width and height
 			iconSize: [40, 40]
 		});

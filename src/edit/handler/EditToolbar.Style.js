@@ -112,11 +112,14 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	_setFontSize: function (size) {
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
-			// #TODO: change opacity if it is just the polyline
-			L.previousLayer.setStyle({
-				fontSize: size
-			});
-
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.fontSize = size + 'px';
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					fontSize: size
+				});
+			}
 			L.previousLayer.edited = true;
 			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
 		}
@@ -130,11 +133,15 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	_setColor: function (color, opacity) {
 		// Edit selected item in edit mode
 		if (L.previousLayer != null ) {
-			// #TODO: change opacity if it is just the polyline
-			L.previousLayer.setStyle({
-				color: color,
-				fillOpacity: opacity
-			});
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.color = color;
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					color: color,
+					fillOpacity: opacity
+				});
+			}
 
 			L.previousLayer.edited = true;
 			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited

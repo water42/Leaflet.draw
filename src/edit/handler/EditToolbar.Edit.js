@@ -153,13 +153,13 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 		icon.style.display = 'none';
 
-		if (L.DomUtil.hasClass(icon, 'leaflet-edit-marker-selected')) {
-			L.DomUtil.removeClass(icon, 'leaflet-edit-marker-selected');
+		if (L.DomUtil.hasClass(icon, 'leaflet-edit-marker-editable')) {
+			L.DomUtil.removeClass(icon, 'leaflet-edit-marker-editable');
 			// Offset as the border will make the icon move.
 			this._offsetMarker(icon, -4);
 
 		} else {
-			L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
+			L.DomUtil.addClass(icon, 'leaflet-edit-marker-editable');
 			// Offset as the border will make the icon move.
 			this._offsetMarker(icon, 4);
 		}
@@ -219,8 +219,9 @@ L.EditToolbar.Edit = L.Handler.extend({
 			layer.on('dragend', this._onMarkerDragEnd);
 		} else {
 			layer.editing.enable();
-			layer.on('click', this._editStyle, this);
 		}
+		
+		layer.on('click', this._editStyle, this);
 	},
 
 	_disableLayerEdit: function (e) {
@@ -268,14 +269,32 @@ L.EditToolbar.Edit = L.Handler.extend({
 
 	_editStyle: function (e) {
 		var layer = e.layer || e.target || e;
-			
+		
+		// unselect previous item
 		if (L.previousLayer != null) {
-			L.previousLayer.setStyle({ dashArray: '' });
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.classList.remove('leaflet-edit-marker-selected');
+				L.previousLayer._icon.classList.add('leaflet-edit-marker-editable');
+			} else {
+				L.previousLayer.setStyle({ dashArray: '' });
+			}
 		}
 
-		L.previousLayer = layer;
-		layer.setStyle({ dashArray: '10, 10' });
-		
+		if (layer instanceof L.Marker) {
+			L.previousLayer = layer;
+
+			layer._icon.classList.remove('leaflet-edit-marker-editable');
+			layer._icon.classList.add('leaflet-edit-marker-selected');
+
+			$('.leaflet-draw-edit-styleable').spectrum("set", layer._icon.style.color);
+			$('.leaflet-draw-edit-styleable').spectrum("show");	
+			return;
+		}
+
+		L.previousLayer = layer; // set previous item
+
+		layer.setStyle({ dashArray: '10, 10' }); // select item
+		debugger;
 		$('.leaflet-draw-edit-styleable').spectrum("set", layer.options.color);
 		$('.leaflet-draw-edit-styleable').spectrum("show");
 		
