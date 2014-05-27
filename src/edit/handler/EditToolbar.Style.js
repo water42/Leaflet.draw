@@ -64,7 +64,10 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				showAlpha: true,
 				showPalette: true,
 				palette: [ ],
-				change: function(color) {
+				allowEmpty:true,
+			    chooseText: "Close",
+			    cancelText: "",
+				move: function(color) {
 					styleable._setColor(color.toHexString(), color.alpha);
 				}
 			});
