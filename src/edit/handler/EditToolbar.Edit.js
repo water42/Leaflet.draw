@@ -48,6 +48,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 		L.Handler.prototype.disable.call(this);
 		this._map.fire('draw:editstop', { handler: this.type });
 		this.fire('disabled', {handler: this.type});
+		$('.leaflet-draw-edit-styleable').spectrum("hide"); // show style controls to let user know of possible changes
 	},
 
 	addHooks: function () {
