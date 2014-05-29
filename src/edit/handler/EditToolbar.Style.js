@@ -24,9 +24,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		this.type = L.EditToolbar.Styleable.TYPE;
 
 		this._setColor('#fe57a1', '0.2'); // Set color for all tools on load
-		this._setStroke(4);
-		this._setFontSize(12)
-		this._createControls();
+		this._createControls(); // Create style controls
 	},
 
 	enable: function () {
@@ -47,6 +45,13 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		var styleable = this._styleable,
 			selectStroke = this._createSelect(20),
 			selectFontSize = this._createSelect(50);
+		
+		// default settings
+		// #TODO: move to init() and use this.options/settings
+		this._setStroke(4);
+		this._setFontSize(12);
+		selectStroke.value = 4;
+		selectFontSize.value = 12;		
 
 		selectStroke.addEventListener('change', function() {
 			styleable._setStroke(this.value); 
