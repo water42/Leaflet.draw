@@ -175,6 +175,14 @@
 	background-position: -120px -1px;
 }
 
+.leaflet-draw-toolbar .leaflet-draw-draw-textlabel {
+	background-position: -271px -2px;
+}
+
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-textlabel {
+	background-position: -269px -1px;
+}
+
 /* ================================================================== */
 /* Edit toolbar
 /* ================================================================== */
@@ -209,6 +217,14 @@
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
 	background-position: -240px -2px;
+}
+
+.leaflet-draw-toolbar .leaflet-draw-edit-styleable {
+	background-position: -301px -2px;
+}
+
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-styleable {
+	background-position: -299px -1px;
 }
 
 /* ================================================================== */
