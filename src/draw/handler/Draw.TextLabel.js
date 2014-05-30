@@ -112,16 +112,18 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var target = e.target,
 			child = target._icon.firstChild;
 
+		if (child.contentEditable == "false") return; //used for if text can change or not checking as string because of inheritance
+
 		// If it's been created, don't reset the color or fontsize based on the global setting
 		if ( target.options.fontSize == undefined || target.options.color == undefined) {
 	        target._icon.style.fontSize = target.options.fontSize = this.options.fontSize;
 	        target._icon.style.color = target.options.color = this.options.color;
 		}
  
-
 		child.nextSibling.hidden = true; // hide text
 		child.hidden = false; // Show textarea
-
+		
+		child.contentEditable = true;
 		child.focus();
 		
 		// Call when done editing text
@@ -135,19 +137,18 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	_onBlur: function (e) {
 		var target = e.target;
+		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
+		// currently, css is set to white-space: nowrap
 		if ( target.value ){
+			target.contentEditable = false;
 			target.hidden = true; // hide textarea
 			target.nextSibling.hidden = false; // show text
-
 			target.nextSibling.textContent = target.value // update text with textarea value
 		}
 	},
 
 	_fireCreatedEvent: function () {
-		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
-		// currently, css is set to white-space: nowrap
-
-		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { icon: this.options.icon });
+		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { writable: true, icon: this.options.icon });
 
 		textLabel.on('click', this._onFocus, this);
 

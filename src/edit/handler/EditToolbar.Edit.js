@@ -180,7 +180,6 @@ L.EditToolbar.Edit = L.Handler.extend({
 		var layer = e.layer || e.target || e,
 			isMarker = layer instanceof L.Marker,
 			pathOptions;
-
 		// Don't do anything if this layer is a marker but doesn't have an icon. Markers
 		// should usually have icons. If using Leaflet.draw with Leafler.markercluster there
 		// is a chance that a marker doesn't.
@@ -223,10 +222,11 @@ L.EditToolbar.Edit = L.Handler.extend({
 				// #TODO: remove when leaflet finally fixes their draggable so it's touch friendly again.
 				.on('touchmove', this._onTouchMove, this)
 				.on('touchend', this._onMarkerDragEnd, this);
+
+			layer.on('click', this._editText ,this); // enable text edit
 		} else {
 			layer.editing.enable();
 		}
-		
 		layer.on('click', this._editStyle, this); // on click show styles in style controls
 	},
 
@@ -330,6 +330,12 @@ L.EditToolbar.Edit = L.Handler.extend({
 		// layer.options.color
 		// layer.options.opacity
 		// layer.options.weight
+	},
+	
+	_editText: function (e) {
+		var layer = e.layer || e.target || e;
+		layer._icon.firstChild.contentEditable = true;
+		layer._icon.click(); // simulate a double click to enable text editing
 	},
 
 	_hasAvailableLayers: function () {
