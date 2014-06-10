@@ -1190,16 +1190,18 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 		var target = e.target,
 			child = target._icon.firstChild;
 
+		if (child.contentEditable == "false") return; //used for if text can change or not checking as string because of inheritance
+
 		// If it's been created, don't reset the color or fontsize based on the global setting
 		if ( target.options.fontSize == undefined || target.options.color == undefined) {
 	        target._icon.style.fontSize = target.options.fontSize = this.options.fontSize;
 	        target._icon.style.color = target.options.color = this.options.color;
 		}
  
-
 		child.nextSibling.hidden = true; // hide text
 		child.hidden = false; // Show textarea
-
+		
+		child.contentEditable = true;
 		child.focus();
 		
 		// Call when done editing text
@@ -1213,19 +1215,18 @@ L.Draw.TextLabel = L.Draw.Feature.extend({
 
 	_onBlur: function (e) {
 		var target = e.target;
+		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
+		// currently, css is set to white-space: nowrap
 		if ( target.value ){
+			target.contentEditable = false;
 			target.hidden = true; // hide textarea
 			target.nextSibling.hidden = false; // show text
-
 			target.nextSibling.textContent = target.value // update text with textarea value
 		}
 	},
 
 	_fireCreatedEvent: function () {
-		// #TODO: get textarea's width and height and use that to set the label's container for word wrapping
-		// currently, css is set to white-space: nowrap
-
-		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { icon: this.options.icon });
+		var textLabel = new L.Marker.Touch(this._textlabel.getLatLng(), { writable: true, icon: this.options.icon });
 
 		textLabel.on('click', this._onFocus, this);
 
@@ -3184,7 +3185,6 @@ L.EditToolbar.Edit = L.Handler.extend({
 		var layer = e.layer || e.target || e,
 			isMarker = layer instanceof L.Marker,
 			pathOptions;
-
 		// Don't do anything if this layer is a marker but doesn't have an icon. Markers
 		// should usually have icons. If using Leaflet.draw with Leafler.markercluster there
 		// is a chance that a marker doesn't.
@@ -3227,10 +3227,11 @@ L.EditToolbar.Edit = L.Handler.extend({
 				// #TODO: remove when leaflet finally fixes their draggable so it's touch friendly again.
 				.on('touchmove', this._onTouchMove, this)
 				.on('touchend', this._onMarkerDragEnd, this);
+
+			layer.on('click', this._editText ,this); // enable text edit
 		} else {
 			layer.editing.enable();
 		}
-		
 		layer.on('click', this._editStyle, this); // on click show styles in style controls
 	},
 
@@ -3334,6 +3335,12 @@ L.EditToolbar.Edit = L.Handler.extend({
 		// layer.options.color
 		// layer.options.opacity
 		// layer.options.weight
+	},
+	
+	_editText: function (e) {
+		var layer = e.layer || e.target || e;
+		layer._icon.firstChild.contentEditable = true;
+		layer._icon.click(); // simulate a double click to enable text editing
 	},
 
 	_hasAvailableLayers: function () {
@@ -3492,9 +3499,7 @@ L.EditToolbar.Styleable = L.Handler.extend({
 		this.type = L.EditToolbar.Styleable.TYPE;
 
 		this._setColor('#fe57a1', '0.2'); // Set color for all tools on load
-		this._setStroke(4);
-		this._setFontSize(12)
-		this._createControls();
+		this._createControls(); // Create style controls
 	},
 
 	enable: function () {
@@ -3511,10 +3516,18 @@ L.EditToolbar.Styleable = L.Handler.extend({
 	},
 	
 	_createControls: function () {
-
 		var styleable = this._styleable,
 			selectStroke = this._createSelect(20),
-			selectFontSize = this._createSelect(50);
+			selectFontSize = this._createSelect(50),
+			inputURL = this._createInput(),
+			inputDescription = this._createInput();
+		
+		// default settings
+		// #TODO: move to init() and use this.options/settings
+		this._setStroke(4);
+		this._setFontSize(12);
+		selectStroke.value = 4;
+		selectFontSize.value = 12;		
 
 		selectStroke.addEventListener('change', function() {
 			styleable._setStroke(this.value); 
@@ -3540,30 +3553,45 @@ L.EditToolbar.Styleable = L.Handler.extend({
 				}
 			});
 
+			// #TODO: Be less redundant
 			var polyControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container poly-controls'),
 				textControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container text-controls'),
-				polylegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
-				textlegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
-				strokelabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
-				fontlabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-font-label');
+				linkControlsContainer = L.DomUtil.create('fieldset', 'sp-palette-container link-controls'),
+				polyLegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				textLegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				linkLegend = L.DomUtil.create('legend', 'leaflet-draw-layer-edit-styleable-legend'),
+				strokeLabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-stroke-label'),
+				fontLabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-font-label')
+				urlLabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-url-label'),
+				descriptionLabel = L.DomUtil.create('label', 'leaflet-draw-layer-edit-styleable-description-label');
 			
-			polylegend.textContent = 'Ploy Shape Settings';
-			strokelabel.textContent = 'Stroke Width: ';
+			polyLegend.textContent = 'Poly Shape Settings';
+			strokeLabel.textContent = 'Stroke Width: ';
 			
-			textlegend.textContent = 'Font Settings';
-			fontlabel.textContent = 'Font Size: ';
+			textLegend.textContent = 'Font Settings';
+			fontLabel.textContent = 'Font Size: ';
+
+			linkLegend.textContent = 'Link Settings';
+			urlLabel.textContent = 'Url: ';
+			descriptionLabel.textContent = 'Descption: ';
 			
-			polyControlsContainer.appendChild(polylegend);
-			polyControlsContainer.appendChild(strokelabel);
+			polyControlsContainer.appendChild(polyLegend);
+			polyControlsContainer.appendChild(strokeLabel);
 			polyControlsContainer.appendChild(selectStroke);
 			
-			textControlsContainer.appendChild(textlegend);
-			textControlsContainer.appendChild(fontlabel);
+			textControlsContainer.appendChild(textLegend);
+			textControlsContainer.appendChild(fontLabel);
 			textControlsContainer.appendChild(selectFontSize);
+
+			linkControlsContainer.appendChild(linkLegend);
+			linkControlsContainer.appendChild(urlLabel);
+			linkControlsContainer.appendChild(inputURL);
+			linkControlsContainer.appendChild(descriptionLabel);
+			linkControlsContainer.appendChild(inputDescription);
 
 			$('.leaflet-draw-edit-styleable').spectrum("container").append(polyControlsContainer);
 			$('.leaflet-draw-edit-styleable').spectrum("container").append(textControlsContainer);
-				
+			$('.leaflet-draw-edit-styleable').spectrum("container").append(linkControlsContainer);
 		});
 	},
 
@@ -3578,7 +3606,54 @@ L.EditToolbar.Styleable = L.Handler.extend({
 			select.add(option);
 		}
 
-		return select;
+		return select
+	},
+
+	_createInput: function () {
+		var input = L.DomUtil.create('input','leaflet-draw-layer-edit-styleable-input');
+		return input
+	},
+
+	_setDescription: function (description) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.fontSize = L.previousLayer.options.fontSize = size + 'px';
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					fontSize: size
+				});
+			}
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		L.toolbarDraw.setDrawingOptions({ 
+			textlabel: { fontSize: size + 'px' }
+		});
+	},
+
+	_setURL: function (Url) {
+		// Edit selected item in edit mode
+		if (L.previousLayer != null ) {
+			if (L.previousLayer instanceof L.Marker) {
+				L.previousLayer._icon.style.fontSize = L.previousLayer.options.fontSize = size + 'px';
+			} else {
+				// #TODO: change opacity if it is just the polyline
+				L.previousLayer.setStyle({
+					fontSize: size
+				});
+			}
+			L.previousLayer.edited = true;
+			L.previousLayer.styled = true; // #TODO: simplyfy this to use .edited
+		}
+
+		// Use global var of toolbar that gets set on L.Control.Draw initialization
+		// L.toolbarDraw.setDrawingOptions({ 
+		// 	textlabel: { fontSize: size + 'px' }
+		// });
 	},
 	
 	_setFontSize: function (size) {
