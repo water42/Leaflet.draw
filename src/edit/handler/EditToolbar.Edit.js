@@ -8,8 +8,7 @@ L.EditToolbar.Edit = L.Handler.extend({
 	initialize: function (map, options) {
 		L.Handler.prototype.initialize.call(this, map);
 
-		// Set options to the default unless already set
-		this._selectedPathOptions = options.selectedPathOptions;
+		L.setOptions(this, options);
 
 		// Store the selectable layer group for ease of access
 		this._featureGroup = options.featureGroup;
@@ -142,12 +141,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 			} else if (layer instanceof L.Marker) { // Marker
 				layer.setLatLng(this._uneditedLayerProps[id].latlng);
 			}
-		}
-	},
 
-	_toggleMarkerHighlight: function (marker) {
-		if (!marker._icon) {
-			return;
+			layer.fire('revert-edited', { layer: layer });
 		}
 		// This is quite naughty, but I don't see another way of doing it. (short of setting a new icon)
 		var icon = marker._icon;
@@ -168,17 +163,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 		icon.style.display = '';
 	},
 
-	_offsetMarker: function (icon, offset) {
-		var iconMarginTop = parseInt(icon.style.marginTop, 10) - offset,
-			iconMarginLeft = parseInt(icon.style.marginLeft, 10) - offset;
-
-		icon.style.marginTop = iconMarginTop + 'px';
-		icon.style.marginLeft = iconMarginLeft + 'px';
-	},
-
 	_enableLayerEdit: function (e) {
 		var layer = e.layer || e.target || e,
-			isMarker = layer instanceof L.Marker,
 			pathOptions;
 		// Don't do anything if this layer is a marker but doesn't have an icon. Markers
 		// should usually have icons. If using Leaflet.draw with Leafler.markercluster there
@@ -190,9 +176,9 @@ L.EditToolbar.Edit = L.Handler.extend({
 		// Back up this layer (if haven't before)
 		this._backupLayer(layer);
 
-		// Update layer style so appears editable
-		if (this._selectedPathOptions) {
-			pathOptions = L.Util.extend({}, this._selectedPathOptions);
+		// Set different style for editing mode
+		if (this.options.selectedPathOptions) {
+			pathOptions = L.Util.extend({}, this.options.selectedPathOptions);
 
 			// Use the existing color of the layer
 			if (pathOptions.maintainColor) {
@@ -200,6 +186,8 @@ L.EditToolbar.Edit = L.Handler.extend({
 				pathOptions.fillColor = layer.options.fillColor;
 			}
 
+			layer.options.original = L.extend({}, layer.options);
+			layer.options.editing = pathOptions;
 			if (isMarker) {
 				layer.options.previousOptions = L.Util.extend({color: layer.options.color, fontSize: layer.options.fontSize});
 				this._toggleMarkerHighlight(layer);
@@ -233,6 +221,11 @@ L.EditToolbar.Edit = L.Handler.extend({
 	_disableLayerEdit: function (e) {
 		var layer = e.layer || e.target || e;
 
+		layer.edited = false;
+		layer.editing.disable();
+
+		delete layer.options.editing;
+		delete layer.options.original;
 		// Reset layer styles to that of before select
 		if (this._selectedPathOptions) {
 			if (layer instanceof L.Marker) {
@@ -273,11 +266,6 @@ L.EditToolbar.Edit = L.Handler.extend({
 		}
 
 		layer.off('click', this._editStyle, this);
-	},
-
-	_onMarkerDragEnd: function (e) {
-		var layer = e.target;
-		layer.edited = true;
 	},
 
 	_onMouseMove: function (e) {
