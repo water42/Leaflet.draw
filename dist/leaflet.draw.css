@@ -140,7 +140,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-polyline {
-	background-position: 0 -1px;
+	background-position: -2px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-polygon {
@@ -148,7 +148,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-polygon {
-	background-position: -29px -1px;
+	background-position: -31px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
@@ -156,7 +156,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
-	background-position: -60px -1px;
+	background-position: -62px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-circle {
@@ -164,7 +164,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-circle {
-	background-position: -90px -1px;
+	background-position: -92px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-marker {
@@ -172,7 +172,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-marker {
-	background-position: -120px -1px;
+	background-position: -122px -2px;
 }
 
 /* ================================================================== */
@@ -184,7 +184,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit {
-	background-position: -150px -1px;
+	background-position: -152px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-edit-remove {
@@ -192,7 +192,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove {
-	background-position: -180px -1px;
+	background-position: -182px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
@@ -200,7 +200,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled {
-	background-position: -210px -1px;
+	background-position: -212px -2px;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
@@ -208,7 +208,7 @@
 }
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
-	background-position: -240px -2px;
+	background-position: -242px -2px;
 }
 
 /* ================================================================== */
