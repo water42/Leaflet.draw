@@ -1,7 +1,7 @@
 # Fork of touch enabled michaelguild13/Leaflet.draw
 - Renames bower.json file to avoid erroneous resolution to a different fork of Leaflet.draw
 - Fixes css to be properly aligned in Ionic
-- git version tag set to 1.0.0
+- git version tag set to 2.0.0 - caching issues with bower
 
 #Leaflet.draw With Touch
 This is a touch friendly version of Leaflet.draw that was created and maintained by Michael Guild (https://github.com/michaelguild13).
